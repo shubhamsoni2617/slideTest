@@ -1,691 +1,106 @@
-import React, { Component, memo } from 'react';
-import Slider from 'react-slick';
+import React, { useRef, useState, useEffect } from 'react';
 import './style.scss';
-import HomeService from '../../../shared/services/HomeService';
-import Utilities from '../../../shared/utilities';
-import Shadow from '../../../assets/images/shadow.png';
+import Slider from 'react-slick';
 
-class HomePageCarouselContainer extends Component {
-  constructor(props) {
-    super(props);
+const BannerSlider = () => {
+  const [nav1, setNav1] = useState(null);
+  const [nav2, setNav2] = useState(null);
+  const [bannerData, setBannerData] = useState(
+    new Array(14).fill({
+      full_image: '',
+      navigation_link: '',
+      title: ''
+    })
+  );
+  let slider1 = useRef();
+  let slider2 = useRef();
 
-    this.state = {
-      imageLoaded: '',
-      posts: [],
-      errorMsg: '',
-      sliderBackgroudImage: 0,
-      mainSliderSettings: {
-        // className: 'center',
-        centerMode: true,
-        infinite: true,
-        // focusOnSelect: true,
-        centerPadding: '250px',
-        slidesToShow: 1,
-        speed: 500,
-        arrows: true
-      },
-      thumbSliderSettings: {
-        centerMode: true,
-        infinite: true,
-        speed: 500,
-        slidesToShow: 13,
-        slidesToScroll: 1,
-        focusOnSelect: true,
-        arrows: true
-      },
-      loading: true,
-      loadingThumbnail: true
-    };
-  }
-
-  componentDidMount() {
-    this.handleResolution();
-    window.addEventListener('resize', this.handleResolution);
-    HomeService.getRotationalBanner()
-      .then(res => {
-        if (res && res.data && res.data.data && res.data.data.length > 0) {
-          setTimeout(() => {
-            this.setState(
-              {
-                posts: res.data.data,
-                sliderBackgroudImage: 0,
-                loading: false
-              },
-              () => {
-                this.handleResolution(res.data.data.length);
-                this.setState({
-                  loadingThumbnail: false
-                });
-              }
-            );
-          }, 500);
+  useEffect(() => {
+    setNav1(slider1);
+    setNav2(slider2);
+  }, []);
+  const settings = {
+    arrows: true,
+    draggable: false
+  };
+  const settingsSlider = {
+    autoplay: true,
+    arrows: true,
+    infinite: true,
+    responsive: [
+      {
+        breakpoint: 1280,
+        settings: {
+          slidesToShow: 11
         }
-      })
-      .catch(err => {
-        if (err && err.res) {
-          console.log(err.res);
+      },
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 9
         }
-      });
-  }
-
-  changeBackgroundImage = index => {
-    setTimeout(() => {
-      this.setState({ sliderBackgroudImage: index });
-    }, 200);
-    this.thumbSlider.slickGoTo(index);
+      },
+      {
+        breakpoint: 767,
+        settings: {
+          slidesToShow: 5
+        }
+      },
+      {
+        breakpoint: 450,
+        settings: {
+          slidesToShow: 4
+        }
+      }
+    ]
   };
-
-  onLoad = () => {
-    setTimeout(() => {
-      this.setState({
-        imageLoaded: 'show-shadow'
-      });
-    }, 500);
-  };
-  handleResolution = (postLength = 0) => {
-    let mainSliderSettings = this.state.mainSliderSettings;
-    let thumbSliderSettings = this.state.thumbSliderSettings;
-    let screen = Utilities.getScreenResolution();
-    mainSliderSettings.centerPadding = `${Math.round(
-      (290 / 1366) * screen.width
-    )}px`;
-    // let slidesToShow = Math.round((13 / 1366) * screen.width);
-    // thumbSliderSettings.slidesToShow = 9;
-    // if (this.state.posts.length < thumbSliderSettings.slidesToShow) {
-    //   thumbSliderSettings.slidesToShow =
-    //     this.state.posts.length < 5 ? 4 : this.state.posts.length;
-    //   thumbSliderSettings.centerMode = false;
-    // }
-    if (window.innerWidth >= 1480 && window.innerWidth <= 1980) {
-      thumbSliderSettings.slidesToShow = 13;
-      if (this.state.posts.length < 13) {
-        thumbSliderSettings.slidesToShow = this.state.posts.length;
-        thumbSliderSettings.centerMode = false;
-      }
-    } else if (window.innerWidth > 1280 && window.innerWidth < 1480) {
-      thumbSliderSettings.slidesToShow = 13;
-      if (this.state.posts.length < 13) {
-        thumbSliderSettings.slidesToShow = this.state.posts.length;
-        thumbSliderSettings.centerMode = false;
-      }
-    } else if (window.innerWidth > 1136 && window.innerWidth <= 1280) {
-      thumbSliderSettings.slidesToShow = 11;
-      if (this.state.posts.length < 11) {
-        thumbSliderSettings.slidesToShow = this.state.posts.length;
-        thumbSliderSettings.centerMode = false;
-      }
-    } else if (window.innerWidth >= 768 && window.innerWidth <= 1024) {
-      thumbSliderSettings.slidesToShow = 9;
-      if (this.state.posts.length < 9) {
-        thumbSliderSettings.slidesToShow = this.state.posts.length;
-        thumbSliderSettings.centerMode = false;
-      }
-    } else if (window.innerWidth >= 568 && window.innerWidth <= 767) {
-      thumbSliderSettings.slidesToShow = 5;
-      if (this.state.posts.length < 5) {
-        thumbSliderSettings.slidesToShow = this.state.posts.length;
-        thumbSliderSettings.centerMode = false;
-      }
-    } else if (window.innerWidth >= 320 && window.innerWidth <= 450) {
-      thumbSliderSettings.slidesToShow = 4;
-      if (this.state.posts.length < 4) {
-        thumbSliderSettings.slidesToShow = this.state.posts.length;
-        thumbSliderSettings.centerMode = false;
-      }
-    }
-
-    this.setState({
-      mainSliderSettings: mainSliderSettings,
-      thumbSliderSettings: thumbSliderSettings
-    });
-  };
-
-  render() {
-    console.log('rerender main slider');
-    const { posts, errorMsg, sliderBackgroudImage } = this.state;
-
-    if (posts && posts.length == 0) {
-      // return null;
-    }
-    console.log(sliderBackgroudImage);
-
-    return (
-      <div className={`banner ${this.state.imageLoaded}`}>
-        {!this.state.loading && (
-          <div className="banner-carousel">
-            <div className="banner-background"></div>
-            <div className="shadow">
-              <img src={Shadow} />
-            </div>
-            {posts && posts.length > 0 && (
-              <div className="active-banner-image">
-                <img src={posts[sliderBackgroudImage].full_image} />
-              </div>
-            )}
-            <Slider
-              {...this.state.mainSliderSettings}
-              asNavFor={this.thumbSlider}
-              ref={slider => (this.mainSlider = slider)}
-              beforeChange={index => this.changeBackgroundImage(index + 1)}
-              // afterChange={index => this.changeBackgroundImage(index)}
-              className="slider-for"
-              swipe={true}
-              focusOnSelect={true}
-              // autoplay={this.state.sliderAutoPlay}
-              // autoplaySpeed={1000}
-            >
-              {posts.length
-                ? posts.map((post, key) => (
-                    <div>
-                      <img
-                        onClick={() => {
-                          // this.changeBackgroundImage(key);
-                          if (sliderBackgroudImage == key) {
-                            window.open(post.navigation_link, '_blank');
-                          }
-                        }}
-                        src={post.full_image}
-                        alt="image1"
-                        className="img1 img-responsive"
-                        onLoad={this.onLoad}
-                      />
-                    </div>
-                  ))
-                : null}
-              {errorMsg ? <div>{errorMsg}</div> : null}
-            </Slider>
-          </div>
-        )}
-        {!this.state.loadingThumbnail && (
-          <div className="banner-thumbnail">
-            <Slider
-              {...this.state.thumbSliderSettings}
-              asNavFor={this.mainSlider}
-              ref={slider => (this.thumbSlider = slider)}
-              // focusOnSelect={true}
-              swipe={true}
-            >
-              {posts.length
-                ? posts.map((post, key) => (
-                    <div>
-                      <img
-                        onClick={() => {
-                          // this.changeBackgroundImage(key);
-
-                          console.log(key);
-                        }}
-                        src={post.full_image}
-                        alt="image1"
-                        className="img img-responsive"
-                      ></img>
-                    </div>
-                  ))
-                : null}
-              {errorMsg ? <div>{errorMsg}</div> : null}
-            </Slider>
-          </div>
-        )}
+  return (
+    <div className={`banner`}>
+      <div className='banner-carousel'>
+        <Slider
+          {...settings}
+          asNavFor={nav2}
+          ref={slider => (slider1 = slider)}
+        >
+          {bannerData &&
+            bannerData.map((banner, key) => {
+              return (
+                <div key={banner.title + key}>
+                  <img
+                    src={banner.full_image}
+                    alt={`img${key}`}
+                    className='img1 img-responsive'
+                    // onLoad={this.onLoad}
+                  />
+                </div>
+              );
+            })}
+        </Slider>
       </div>
-    );
-  }
-}
-
-export default memo(HomePageCarouselContainer);
-
-
-
-
-
---------------------------------------------------------------------
-
-
-.banner{
-    .banner-carousel{
-        .slick-slide:not(.slick-active) > div {
-            // transform: scale(.85); 
-            transform: scaleX(.9) scaleY(.8) translateY(40px) !important; 
-            @media(max-width: 991px) {
-                transform: scaleX(.9) scaleY(.7) translateY(40px) !important; 
-            }
-            @media(max-width: 767px) {
-                transform: scaleX(0.9) scaleY(0.7) translateY(15px) !important; 
-            }
-        } 
-        .slick-slide > div {
-            transform: scale(.85);
-            transition: transform .3s cubic-bezier(.4,0,.2,1);  
-        }
-        .slick-center > div {
-            // transform: scale(1.05); 
-            transform: none;
-        }
-        .slider__item > img {
-            width: 100%;
-            height: auto;
-        }
-        // .img1{
-        // height: 350px;
-        // width: 600px;
-        // }
-    }
-    &.show-shadow{
-        .banner-carousel{
-            .slick-initialized{
-                .slick-slide{
-                    &.slick-active.slick-current{
-                        & > div{
-                            & > div{
-                                position: relative;
-                                transition: 0.5s ease-in;
-                                &:after{
-                                    position: absolute;
-                                    content: "";
-                                    top: auto;
-                                    bottom: 5px;
-                                    right: 0px;
-                                    left: 25px;
-                                    width: calc(100% - 50px);
-                                    height: 30px;
-                                    border-radius: 45%;
-                                    z-index: -1;
-                                    box-shadow: 0px 0px 20px 20px rgba(0, 0, 0, 0.5);
-                                    transition: 0.5s box-shadow;
-                                    @media(max-width: 991px){
-                                        box-shadow: 0px 0px 10px 20px rgba(0, 0, 0, 0.5);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-  //Banner style start
-.banner {
-	padding: 0px;
-	position: relative;
-    width: 100%;
-    background: #eaeced;
-   
-    .main-image{
-      opacity: 0;
-	  transition: opacity .5s;
-	  -webkit-transition: opacity .5s;
-	  -moz-transition: opacity .5s;
-	  -o-transition: opacity .5s;
-    }
-    .show-image{
-        opacity: 1 !important;
-    }
-	
-	.banner-carousel {
-		padding-top: 150px;
-		height: 100%;
-		position: relative;
-        z-index: 1;
-        .banner-background{
-            background-color: #000;
-            height: 100px;
-            background-color: #e4e4e4;
-            height: 204px;
-            margin: 10px;
-            display: none;
-        }
-        @media(max-width: 1980px) {
-            padding-top: 155px;
-        }
-        @media(max-width: 1480px) {
-            padding-top: 147px;
-        }
-        @media(max-width: 1280px) {
-            padding-top: 145px;
-        }
-		@media(max-width: 991px) {
-			width: 100%;
-            text-align: center;
-            padding-top: 90px;
-        }
-        @media(max-width: 767px) {
-            padding-bottom: 15px;
-            padding-top: 118px;
-        }
-        @media(max-width: 576px) {
-            padding-top: 118px;
-        }
-		ul {
-			display: grid;
-			padding-top: 22px;
-			grid-template-columns: 1fr 2fr 1fr;
-			justify-content: center;
-			text-align: center;
-			align-items: center;
-            grid-gap: 20px;
-            height: 424px;
-            position: relative;
-			@media(max-width: 991px) {
-				padding-top: 30px;
-			}
-			@media(max-width: 767px){
-				padding-top: 15px;
-				display: flex;
-			}
-			li {
-                list-style: none;
-                width: 60%;
-                position: absolute;
-                left: 20%;
-                top: 41px;
-				&:first-child {
-                    margin-left: -22%;
-                    position: absolute;
-                    left: 0;
-                    top: 25%;
-                    width: 40%;
-					@media(max-width: 991px) {
-						margin-left: -50%;
-						align-items: center;
-						flex: 0 0 45%;
-					}
-					@media (max-width: 767px) {
-						flex: 0 0 55%;
-					}
-				}
-				&.active {
-					@media(max-width: 991px) {
-						flex: 0 0 55%;
-					}
-					@media (max-width: 767px) {
-						flex: 0 0 85%;
-						padding: 10px;
-					}
-					&+.slide {
-                        margin-right: -22%;
-                        position: absolute;
-                        right: 0;
-                        left: 0;
-                        top: 25%;
-                        width: 40%;
-                        left: auto;
-						@media(max-width: 991px) {
-							margin-right: -50%;
-							flex: 0 0 45%;
-						}
-						@media (max-width: 767px) {
-							flex: 0 0 55%;
-						}
-					}
-				}
-			}
-        }
-        .shadow{
-            position: absolute;
-            z-index: 1;
-            left: 20%;
-            /* top: 0px; */
-            bottom: -40px;
-            right: 0;
-            width: 60%;
-            display: none;
-            @media(max-width: 1260px) {
-                bottom: -15px;
-            }
-            @media(max-width: 767px) {
-                bottom: -8px;
-                opacity: 0.5;
-            }
-        }
-		.active-banner-image {
-			border-bottom-left-radius: 100%;
-			border-bottom-right-radius: 100%;
-			position: absolute;
-			max-height: 90%;
-			z-index: -1;
-			overflow: hidden;
-			left: 0;
-			top: 0px;
-			bottom: 0;
-			right: 0;
-			width: 100%;
-			transform: scale(1.1);
-            margin-top: 0;
-            &::after{
-                // position: absolute;
-                // bottom: 0;
-                // left: 50%;
-                // width: 100px;
-                // height: 30px;
-                // content: "";
-                // background: transparent;
-                // box-shadow: 0 0 50px #000;
-            }
-            @media(max-width: 1260px) {
-                max-height: 86%;
-            }
-			@media(max-width: 991px) {
-				max-height: 100%;
-				margin-top: -45px;
-			}
-			@media (max-width: 767px) {
-				margin-top: 0px;
-				border-bottom-left-radius: 50%;
-                border-bottom-right-radius: 50%;
-                max-height: 88%;
-			}
-			img {
-				width: 100%;
-				object-fit: cover;
-				object-position: 0% 40%;
-				filter: blur(20px);
-                height: 600px;
-                transition: background-image 3s ease-in-out;
-				@media(max-width: 991px) {
-					object-position: center;
-					filter: blur(5px);
-					height: 90%;
-				}
-			}
-        }
-        .slick-track{
-            @media(max-width: 991px){
-                display: flex;
-                align-items: center;
-            }
-            @media(max-width: 767px){
-                display: flex;
-                align-items: center;
-            }
-        }
-		.slick-slider  {
-            position: relative;
-            margin-left: 0px;
-            z-index: 10;
-            .slick-list{
-                overflow: inherit;
-            }
-            .slick-slide{
-                &.slick-center{
-                    > div{
-                        // transform: scale(1.05);
-                        transform: none;
-                        div{
-                            box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
-                        }
-                    }
-                }
-                > div{
-                    transform: scale(0.89);
-                }
-            }
-            .slick-prev{
-                left: 10px;
-                &:hover{
-                    border: none;
-                }
-                &::before{
-                    box-shadow: 1px -1px 0 1px #0098FF inset;
-                    -webkit-box-shadow: 2px -2px #0098FF inset;
-                }
-                @media(max-width: 767px) {
-                    display: none !important;
-                }
-            }
-            .slick-next{
-                right: 10px;
-                &:hover{
-                    border: none;
-                }
-                &::before{
-                    box-shadow: 1px -1px 0 1px #0098FF inset;
-                    -webkit-box-shadow: 2px -2px #0098FF inset;
-                }
-                @media(max-width: 767px) {
-                    display: none !important;
-                }
-            }
-		}
-	}
-	.banner-thumbnail {
-        padding: 0;
-        position: relative;
-        z-index: 1;
-        padding-top: 28px;
-        @media(max-width: 1280px){
-            padding-top: 23px;
-        }
-        .slick-slider{
-            .slick-list{
-                overflow: visible;
-                .slick-track{
-                    display: flex;
-                    align-items: center;
-                    @media(max-width: 767px){
-                        display: flex;
-                        align-items: center;
-                    }
-                }
-                .slick-slide{
-                    > div{
-                        transform: scale(0.95);
-                    }
-                    img{
-                        transition: 0.6s transform;
-                        -webkit-transition: 0.6s transform;
-                        -moz-transition: 0.6s transform;
-                        -o-transition: 0.6s transform;
-                    }
-                    &.slick-current{
-                        div > div{
-                            position: relative;
-                            &::before{
-                                height: 6px;
-                                content: "";
-                                background: #0098ff;
-                                position: absolute;
-                                bottom: 0;
-                                left: 0;
-                                width: 100%;
-                                z-index: 1;
-                                transition: 0.6s width, 0.5s left;
-                                -webkit-transition: 0.6s width, 0.5s left;
-                                -moz-transition: 0.6s width, 0.5s left;
-                                -o-transition: 0.6s width, 0.5s left;
-                                @media(max-width: 767px) {
-                                    height: 3px;
-                                }
-                            }
-                        }
-                    }
-                    &:hover{
-                        @media(min-width: 767px){
-                            cursor: pointer;
-                            z-index: 1;
-                            position: relative;
-                            img{
-                                transform: scale(1.1) translateY(-10px);
-                            }
-                        }
-                    }
-                    &.slick-active.slick-current{
-                        &:hover{
-                            div > div{
-                                position: relative;
-                                &::before{
-                                    left: -6px;
-                                    width: calc(100% + 12px);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            .slick-prev{
-                position: absolute;
-                left: 15px;
-                top: 48%;
-                // background: url(../../../assets/images/left-oval-arrow.svg) no-repeat;
-                height: 28px;
-                width: 28px;
-                &:before{
-                    box-shadow: none;
-                    -webkit-box-shadow: none;
-                }
-                &:hover{
-                    opacity: 0.9;
-                    border: none;
-                }
-                @media(max-width: 767px) {
-                    height: 20px;
-                    width: 20px;
-                    background-size: 100% 100%;
-                    left: 10px;
-                    &:before{
-                        padding: 6px;
-                        border-width: 0 0 6px 6px;
-                    }
-                }
-            }
-            .slick-next{
-                position: absolute;
-                right: 15px;
-                top: 48%;
-                // background: url(../../../assets/images/right-oval-arrow.svg) no-repeat;
-                height: 28px;
-                width: 28px;
-                &:before{                    
-                    box-shadow: none;
-                    -webkit-box-shadow: none;
-                }
-                &:hover{
-                    opacity: 0.9;
-                    border: none;
-                }
-                @media(max-width: 767px) {
-                    height: 20px;
-                    width: 20px;
-                    background-size: 100% 100%;
-                    right: 10px;
-                    &:before{
-                        padding: 6px;
-                        border-width: 0 0 6px 6px;
-                    }
-                }
-            }
-        }
-		ul {
-			display: flex;
-			flex-wrap: nowrap;
-			li {
-				flex: 0 0 auto;
-				list-style: none;
-				@media(max-width: 767px){
-					flex: 0 0 16%;
-				}
-				a {
-					display: inline-block;
-				}
-			}
-		}
-	}
-}
+      <div className='banner-thumbnail'>
+        <Slider
+          {...settingsSlider}
+          asNavFor={nav1}
+          ref={slider => (slider2 = slider)}
+          slidesToShow={14}
+          swipeToSlide={true}
+          focusOnSelect={true}
+        >
+          {bannerData &&
+            bannerData.map((banner, key) => {
+              return (
+                <div key={banner.title + key}>
+                  <img
+                    src={banner.full_image}
+                    alt={`img${key}`}
+                    className='img img-responsive'
+                  />
+                </div>
+              );
+            })}
+        </Slider>
+      </div>
+    </div>
+  );
+};
+export default BannerSlider;
